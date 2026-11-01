@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>factory_sim</name>
+  <version>0.1.0</version>
+  <description>Gazebo Classic world, differential-drive robot and ROS 2 nodes for task B1 (store + M1-M4, one AMR)</description>
+  <maintainer email="author@example.com">author</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <depend>gazebo_dev</depend>
+  <depend>gazebo_ros</depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+
+  <exec_depend>gazebo_plugins</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>gazebo_msgs</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

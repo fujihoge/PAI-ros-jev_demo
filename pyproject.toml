@@ -1,0 +1,15 @@
+[project]
+name = "b1-jev-dispatch"
+version = "0.1.0"
+description = "Task B1: one AMR supplies a serial line M1-M4; the next job is chosen by Jev (ROS 2 Humble / Gazebo Classic 11 demo)"
+requires-python = ">=3.10"
+dependencies = [
+    "typesafe-sdk>=0.7.2",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests", "ros_ws/src/factory_sim/test"]

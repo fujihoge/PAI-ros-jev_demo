@@ -1,0 +1,275 @@
+<?xml version="1.0"?>
+<!-- 差動二輪ロボット（Gazebo Classic 11 / ROS 2 Humble）。
+     引数: cargo（true で積載台の上に色付き箱を表示）, cargo_color（rgba）。
+     フットプリント: 0.34 x 0.30 m（0.4 m 以内）。base_footprint=地面、base_link=車体中心 -->
+<robot name="factory_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="cargo" default="false"/>
+  <xacro:arg name="cargo_color" default="1 0.5 0 1"/>
+  <!-- diff_drive の暫定値（感度試験用に引数化。既定は従来値） -->
+  <xacro:arg name="max_wheel_accel" default="2.0"/>
+  <xacro:arg name="max_wheel_torque" default="5.0"/>
+  <!-- 0=ENCODER（車輪の積算）, 1=WORLD（ワールド真値）。実測で WORLD と同一だったため明示する -->
+  <xacro:arg name="odom_source" default="1"/>
+
+  <!-- 寸法 [m] / 質量 [kg] -->
+  <xacro:property name="body_l" value="0.34"/>
+  <xacro:property name="body_w" value="0.26"/>
+  <xacro:property name="body_h" value="0.10"/>
+  <xacro:property name="body_m" value="4.0"/>
+  <xacro:property name="body_z" value="0.08"/>   <!-- 車体中心の高さ（下面 0.03） -->
+  <xacro:property name="wheel_r" value="0.05"/>
+  <xacro:property name="wheel_len" value="0.03"/>
+  <xacro:property name="wheel_m" value="0.3"/>
+  <xacro:property name="wheel_y" value="0.14"/>  <!-- 車輪中心の y（左右）。輪距 0.28 -->
+  <xacro:property name="caster_r" value="0.03"/>
+  <xacro:property name="caster_m" value="0.1"/>
+  <xacro:property name="caster_x" value="0.13"/>
+  <xacro:property name="plate_l" value="0.28"/>
+  <xacro:property name="plate_w" value="0.22"/>
+  <xacro:property name="plate_t" value="0.01"/>
+  <xacro:property name="plate_m" value="0.2"/>
+  <xacro:property name="cargo_s" value="0.12"/>
+  <xacro:property name="cargo_h" value="0.10"/>
+  <xacro:property name="cargo_m" value="0.2"/>
+  <xacro:property name="lidar_x" value="0.12"/>
+  <xacro:property name="lidar_z" value="0.28"/>  <!-- 積載箱の上面(約0.24)より高く、後方視界を遮らない -->
+  <xacro:property name="lidar_m" value="0.15"/>
+  <xacro:property name="mast_len" value="${lidar_z-body_z-body_h/2-plate_t-0.02}"/>
+
+  <xacro:macro name="box_inertial" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m/12*(y*y+z*z)}" ixy="0" ixz="0" iyy="${m/12*(x*x+z*z)}" iyz="0" izz="${m/12*(x*x+y*y)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <material name="body_mat"><color rgba="0.2 0.2 0.25 1"/></material>
+  <material name="wheel_mat"><color rgba="0.05 0.05 0.05 1"/></material>
+  <material name="plate_mat"><color rgba="0.75 0.75 0.78 1"/></material>
+  <material name="lidar_mat"><color rgba="0.1 0.1 0.1 1"/></material>
+  <material name="stripe_mat"><color rgba="0.1 0.6 0.9 1"/></material>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${body_z}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <geometry><box size="${body_l} ${body_w} ${body_h}"/></geometry>
+      <material name="body_mat"/>
+    </visual>
+    <collision><geometry><box size="${body_l} ${body_w} ${body_h}"/></geometry></collision>
+    <xacro:box_inertial m="${body_m}" x="${body_l}" y="${body_w}" z="${body_h}"/>
+  </link>
+
+  <!-- 前方が分かる色帯（見た目のみ・別リンクにして色を付ける） -->
+  <link name="front_stripe_link">
+    <visual>
+      <geometry><box size="0.04 ${body_w+0.002} 0.04"/></geometry>
+      <material name="stripe_mat"/>
+    </visual>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+  <joint name="front_stripe_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="front_stripe_link"/>
+    <origin xyz="${body_l/2-0.018} 0 0"/>
+  </joint>
+
+  <!-- 駆動輪 -->
+  <xacro:macro name="wheel" params="name y">
+    <link name="${name}_wheel_link">
+      <visual>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_r}" length="${wheel_len}"/></geometry>
+        <material name="wheel_mat"/>
+      </visual>
+      <collision>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_r}" length="${wheel_len}"/></geometry>
+      </collision>
+      <inertial>
+        <origin rpy="${pi/2} 0 0"/>
+        <mass value="${wheel_m}"/>
+        <inertia ixx="${wheel_m/12*(3*wheel_r*wheel_r+wheel_len*wheel_len)}" ixy="0" ixz="0"
+                 iyy="${wheel_m/12*(3*wheel_r*wheel_r+wheel_len*wheel_len)}" iyz="0"
+                 izz="${wheel_m*wheel_r*wheel_r/2}"/>
+      </inertial>
+    </link>
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}_wheel_link"/>
+      <origin xyz="0 ${y} ${wheel_r-body_z}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.01" friction="0.0"/>
+    </joint>
+    <gazebo reference="${name}_wheel_link">
+      <material>Gazebo/Black</material><mu1>1.0</mu1><mu2>1.0</mu2><kp>500000.0</kp><kd>10.0</kd>
+    </gazebo>
+  </xacro:macro>
+  <xacro:wheel name="left" y="${wheel_y}"/>
+  <xacro:wheel name="right" y="${-wheel_y}"/>
+
+  <!-- キャスター（前後、摩擦ゼロの球） -->
+  <xacro:macro name="caster" params="name x">
+    <link name="${name}_caster_link">
+      <visual>
+        <geometry><sphere radius="${caster_r}"/></geometry>
+        <material name="wheel_mat"/>
+      </visual>
+      <collision><geometry><sphere radius="${caster_r}"/></geometry></collision>
+      <inertial>
+        <mass value="${caster_m}"/>
+        <inertia ixx="${2.0/5*caster_m*caster_r*caster_r}" ixy="0" ixz="0"
+                 iyy="${2.0/5*caster_m*caster_r*caster_r}" iyz="0"
+                 izz="${2.0/5*caster_m*caster_r*caster_r}"/>
+      </inertial>
+    </link>
+    <joint name="${name}_caster_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_caster_link"/>
+      <origin xyz="${x} 0 ${caster_r-body_z}"/>
+    </joint>
+    <gazebo reference="${name}_caster_link">
+      <material>Gazebo/Black</material><mu1>0.0</mu1><mu2>0.0</mu2><kp>500000.0</kp><kd>10.0</kd>
+    </gazebo>
+  </xacro:macro>
+  <xacro:caster name="front" x="${caster_x}"/>
+  <xacro:caster name="rear" x="${-caster_x}"/>
+
+  <!-- 積載台（平らな板。車体上面の上） -->
+  <link name="cargo_plate_link">
+    <visual>
+      <geometry><box size="${plate_l} ${plate_w} ${plate_t}"/></geometry>
+      <material name="plate_mat"/>
+    </visual>
+    <collision><geometry><box size="${plate_l} ${plate_w} ${plate_t}"/></geometry></collision>
+    <xacro:box_inertial m="${plate_m}" x="${plate_l}" y="${plate_w}" z="${plate_t}"/>
+  </link>
+  <joint name="cargo_plate_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="cargo_plate_link"/>
+    <origin xyz="-0.02 0 ${body_h/2+plate_t/2}"/>
+  </joint>
+
+  <!-- 積載箱（cargo:=true のときだけ出す。見た目のみで衝突なし） -->
+  <xacro:if value="$(arg cargo)">
+    <link name="cargo_box_link">
+      <visual>
+        <geometry><box size="${cargo_s} ${cargo_s} ${cargo_h}"/></geometry>
+        <material name="cargo_mat"><color rgba="$(arg cargo_color)"/></material>
+      </visual>
+      <xacro:box_inertial m="${cargo_m}" x="${cargo_s}" y="${cargo_s}" z="${cargo_h}"/>
+    </link>
+    <joint name="cargo_box_joint" type="fixed">
+      <parent link="cargo_plate_link"/>
+      <child link="cargo_box_link"/>
+      <origin xyz="-0.03 0 ${plate_t/2+cargo_h/2}"/>
+    </joint>
+  </xacro:if>
+
+  <!-- 2D LiDAR（細い支柱の上。支柱は見た目のみ） -->
+  <link name="lidar_mast_link">
+    <visual>
+      <geometry><cylinder radius="0.008" length="${mast_len}"/></geometry>
+      <material name="lidar_mat"/>
+    </visual>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+  <joint name="lidar_mast_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_mast_link"/>
+    <origin xyz="${lidar_x} 0 ${body_h/2+plate_t+mast_len/2}"/>
+  </joint>
+
+  <link name="lidar_link">
+    <visual>
+      <geometry><cylinder radius="0.03" length="0.04"/></geometry>
+      <material name="lidar_mat"/>
+    </visual>
+    <inertial>
+      <mass value="${lidar_m}"/>
+      <inertia ixx="${lidar_m/12*(3*0.03*0.03+0.04*0.04)}" ixy="0" ixz="0"
+               iyy="${lidar_m/12*(3*0.03*0.03+0.04*0.04)}" iyz="0"
+               izz="${lidar_m*0.03*0.03/2}"/>
+    </inertial>
+  </link>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="${lidar_x} 0 ${lidar_z-body_z}"/>
+  </joint>
+
+
+  <!-- Gazebo Classic は URDF の色を使わないので、リンクごとに Gazebo 標準マテリアルを指定 -->
+  <gazebo reference="base_link"><material>Gazebo/DarkGrey</material></gazebo>
+  <gazebo reference="front_stripe_link"><material>Gazebo/Blue</material></gazebo>
+  <gazebo reference="cargo_plate_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="lidar_link"><material>Gazebo/Black</material></gazebo>
+  <gazebo reference="lidar_mast_link"><material>Gazebo/Black</material></gazebo>
+  <xacro:if value="$(arg cargo)">
+    <gazebo reference="cargo_box_link"><material>Gazebo/Orange</material></gazebo>
+  </xacro:if>
+
+  <!-- Gazebo プラグイン -->
+  <gazebo>
+    <plugin name="diff_drive" filename="libgazebo_ros_diff_drive.so">
+      <update_rate>50</update_rate>
+      <left_joint>left_wheel_joint</left_joint>
+      <right_joint>right_wheel_joint</right_joint>
+      <wheel_separation>${2*wheel_y}</wheel_separation>
+      <wheel_diameter>${2*wheel_r}</wheel_diameter>
+      <max_wheel_torque>$(arg max_wheel_torque)</max_wheel_torque>
+      <max_wheel_acceleration>$(arg max_wheel_accel)</max_wheel_acceleration>
+      <odometry_source>$(arg odom_source)</odometry_source>
+      <command_topic>cmd_vel</command_topic>
+      <odometry_topic>odom</odometry_topic>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="lidar_link">
+    <sensor name="lidar" type="ray">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>20</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>180</samples>
+            <resolution>1.0</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.12</min>
+          <max>6.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise><type>gaussian</type><mean>0.0</mean><stddev>0.005</stddev></noise>
+      </ray>
+      <plugin name="lidar_plugin" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <remapping>~/out:=scan</remapping>
+        </ros>
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>lidar_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+</robot>

@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# ROS 2 / colcon
+build/
+install/
+log/
+ros_ws/build/
+ros_ws/install/
+ros_ws/log/
+*.bag
+rosbag*/
+
+# run outputs and secrets
+out/
+.env
