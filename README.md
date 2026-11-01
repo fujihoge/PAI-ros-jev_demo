@@ -111,6 +111,7 @@ ros2 launch factory_sim b1_episode.launch.py headless:=false out:=out/b1_replay
 ```
 
 - `decision_node` が記録済みの判断列（`policy:=replay`、既定）を `/dispatch/decision` で返し、`b1_node` がそれに従ってロボットを走らせる。1800 秒（シミュレーション時間）で終了し、`out/b1_replay/` に `decisions.jsonl`、`legs.jsonl`、`tasks.jsonl`、`metrics.json` を書く。
+- 移動と車輪の既定値（`nav_vmax:=1.2 nav_wmax:=2.5 nav_drive_dec:=0.8 nav_turn_dec:=4.0 max_wheel_accel:=6.0 max_wheel_torque:=15.0`）は、記録した走行と同じ値である。遅い値にすると移動が計画の時刻に間に合わず、途中で打ち切られることがある。
 - GUI を出さないときは `headless:=true`。
 - 別の記録を使うときは `trace:=<json のパス>`。
 - Jev をつなぐ場合（自分のキーが必要）: `policy:=jev_b1x jev_transport:=sdk`。`jev_transport:=mock`（既定）は擬似回答で、ネットワークを使わない。

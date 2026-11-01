@@ -56,12 +56,12 @@ def generate_launch_description():
         DeclareLaunchArgument('headless', default_value='true'),
         DeclareLaunchArgument('out', default_value='out/b1_replay'),
         DeclareLaunchArgument('confirm_s', default_value='0.2'),
-        DeclareLaunchArgument('nav_wmax', default_value='1.0'),
-        DeclareLaunchArgument('nav_turn_dec', default_value='1.5'),
-        DeclareLaunchArgument('nav_vmax', default_value='0.6'),
+        DeclareLaunchArgument('nav_wmax', default_value='2.5'),
+        DeclareLaunchArgument('nav_turn_dec', default_value='4.0'),
+        DeclareLaunchArgument('nav_vmax', default_value='1.2'),
         DeclareLaunchArgument('nav_drive_dec', default_value='0.8'),
-        DeclareLaunchArgument('max_wheel_accel', default_value='2.0'),
-        DeclareLaunchArgument('max_wheel_torque', default_value='5.0'),
+        DeclareLaunchArgument('max_wheel_accel', default_value='6.0'),
+        DeclareLaunchArgument('max_wheel_torque', default_value='15.0'),  # nav/wheel defaults = the recorded 2026-10-29 run
         DeclareLaunchArgument('decider', default_value='node'),               # node: decision_node decides | inprocess: inside b1_node
         DeclareLaunchArgument('debug_decisions', default_value='false'),
         DeclareLaunchArgument('policy', default_value='replay'),              # decision_node: replay | jev_b1x
