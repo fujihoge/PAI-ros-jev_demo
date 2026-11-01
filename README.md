@@ -57,7 +57,7 @@ scripts/run_b1x_episode.py   1 回の走行の入口（replay / mock / real）
 recorded/b1x_seed5_empty.json  記録済みの判断列（133 回）と出荷イベント
 tests/                計算モデルと b1x のテスト（API 不要）
 ros_ws/src/factory_sim/  ROS 2 パッケージ
-  factory_sim/        b1_node, decision_node, decision_core, b1_runner, safety 以外の Python 部品
+  factory_sim/        ノードの本体（b1_node, decision_node）と部品（decision_core, b1_runner, nav_driver など）
   scripts/            実行ファイル（b1_node.py, decision_node.py, safety_stop.py）
   launch/             sim.launch.py, b1_episode.launch.py
   worlds/ urdf/ plugin/ media/   世界、ロボット、Gazebo プラグイン（C++）、表示板のテクスチャ
@@ -116,7 +116,7 @@ ros2 launch factory_sim b1_episode.launch.py headless:=false out:=out/b1_replay
 - Jev をつなぐ場合（自分のキーが必要）: `policy:=jev_b1x jev_transport:=sdk`。`jev_transport:=mock`（既定）は擬似回答で、ネットワークを使わない。
 - ノードはリポジトリの直下（`factory_b/` のある場所）を自動で探す。見つからないときは環境変数 `B1_PROJECT_ROOT` にそのパスを入れる。
 
-Gazebo ではロボットの実際の走行時間が計算モデルの想定とずれるので、再生中の完成数は 20 と同じになるとは限らない。ずれは `metrics.json` の `leg_over_plan_*` などに出る。
+作成者の環境（2026-10-29）では、Gazebo での再生でも判断 133 回、完成数 20 個になった。ただし、ロボットの実際の走行時間は計算モデルの想定とずれることがあり、環境によっては完成数が 20 と一致しない場合がある。ずれは `metrics.json` の `leg_over_plan_*` などに出る。
 
 ### テスト
 
@@ -144,7 +144,7 @@ API もネットワークも使わない。`ros_ws/src/factory_sim/test/` のテ
 
 ## 注意
 
-- デモ用である。seed 5 の 1 回の走行の結果であり、性能評価ではない。他の seed や他の方式との比較はしていない。
+- デモ用である。seed 5 の 1 回の走行の結果であり、性能評価ではない。提出した動画とスライドでは、同じ条件の固定巡回（M1→M4 の順に供給を繰り返す方式。完成数 17 個）と並べて示したが、これも 1 回の比較であり、統計的な比較ではない。
 - 問いと事実の項目、出荷の規則、各しきい値は、事前に別の場面集合で調整したものである。この走行の結果は、独立な検証にはならない。
 - 他の方式との比較に使ったコード（比較用の方針、評価・掃引のスクリプト）は、このリポジトリに含めていない。`policies/jev_b1.py` の `fallback_choice` は、Jev の呼び出しが失敗または時間切れのときの代替であり、比較対象ではない。
 - 世界ファイル `factory_b1.world` は生成物で、生成スクリプトは含めていない。
@@ -152,7 +152,7 @@ API もネットワークも使わない。`ros_ws/src/factory_sim/test/` のテ
 
 ## 参考文献・リンク
 
-- TypeSafe: https://typesafe.ai
+- TypeSafe のドキュメント: https://docs.typesafe.ai/
 - typesafe-sdk（PyPI）: https://pypi.org/project/typesafe-sdk/
 - ROS 2 Humble のドキュメント: https://docs.ros.org/en/humble/
 - Gazebo Classic: https://classic.gazebosim.org/
