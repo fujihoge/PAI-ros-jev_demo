@@ -4,7 +4,7 @@
   <name>factory_sim</name>
   <version>0.1.0</version>
   <description>Gazebo Classic world, differential-drive robot and ROS 2 nodes for task B1 (store + M1-M4, one AMR)</description>
-  <maintainer email="author@example.com">author</maintainer>
+  <maintainer email="68263515+fujihoge@users.noreply.github.com">fujihoge</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
